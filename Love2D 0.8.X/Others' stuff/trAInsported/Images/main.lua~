@@ -1,0 +1,12 @@
+function love.draw()
+	if os.time() % 2 == 0 then
+		love.graphics.setColor(255,0,0)
+	else
+		love.graphics.setColor(255*255,255*255,255*255)
+	end
+	love.graphics.draw(image, 0,0)
+end
+
+function love.load()
+	image = love.graphics.newImage("Logo.png")
+end

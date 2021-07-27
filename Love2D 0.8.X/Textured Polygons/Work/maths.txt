@@ -1,0 +1,7 @@
+sin theta=sqrt(1-cos^2 theta)
+
+pA=v1+A*((p-v1) dot A)
+
+length(p-pA)=r*sqrt(1-dot(A,B)^2)
+
+r^2=((p.x-pA.x)^2+(p.y-pA.y)^2)/(1-dot(A,B)^2)

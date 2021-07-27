@@ -1,0 +1,415 @@
+--By xXxMoNkEyMaNxXx
+local args={...}
+local cards,scene=args[1],args[2]
+
+local vec=require'vec'
+
+scene.setLookDown(0.6)
+scene.setRadius(3,2)
+scene.FOV=0.1
+
+local player=cards.newPlayer'John'
+
+local deck=cards.newStack()
+local used=cards.newStack()
+deck.alignment=1
+used.alignment=0.5
+used.layout="Horizontal"
+cards.newDeck(deck)
+deck:shuffle()
+
+local move,origin
+
+local suits={}
+for i=1,4 do
+	local s=cards.newStack()
+	s.layout="Pile"
+	s.alignment=1
+	s.mouseEnter=function()
+		s.layout="Vertical"
+	end
+	s.mouseLeave=function()
+		s.layout="Pile"
+	end
+	s.mouseDown=function(playerId,index)
+		if not dealing then
+			origin={s,#s}
+			s:getCard(#s):move(move,i)
+		end
+	end
+	suits[i]=s
+end
+
+local ceil=math.ceil
+local function ensuite(card)
+	local suit=ceil(card.cardId/13)
+	if (card.value-#suits[suit]-1)%13==0 then
+		card:move(suits[suit])
+		return true
+	end
+end
+
+local dealing=true
+
+local nColumns=15
+local columns={}
+for i=1,nColumns do
+	local s=cards.newStack()
+	s.layout="Vertical"
+	s.owner=player.playerId
+	s.mouseDown=function(playerId,index)
+		if not dealing then
+			local card=s:getCard(index)
+			if index==#s and ensuite(card) then
+				if #s>0 then
+					s:getCard().up=true
+				end
+				return
+			end
+			if card.up then
+				if card.initial=="K" then
+					local free
+					for i=1,#columns do
+						if #columns[i]==0 then
+							free=columns[i]
+							break
+						end
+					end
+					if free then
+						for i=1,#s-index+1 do
+							s:getCard(index):move(free,i)
+						end
+						if #s>0 then
+							s:getCard().up=true
+						end
+					end
+				else
+					origin={s,index}
+					for i=1,#s-index+1 do
+						s:getCard(index):move(move,i)
+					end
+				end
+			end
+		end
+	end
+	columns[i]=s
+end
+
+move=cards.newStack()
+move.owner=player.playerId
+move.layout="Vertical"
+
+deck.mouseEnter=function()
+	deck.layout="Horizontal"
+end
+deck.mouseLeave=function()
+	deck.layout="Pile"
+end
+deck.mouseDown=function()
+	if not dealing then
+		for i=1,#used do
+			used:getCard():move(deck,i,false)
+		end
+		for i=1,math.min(3,#deck) do
+			deck:getCard():move(used,true)
+		end
+	end
+end
+used.mouseDown=function(playerId,index)
+	if index==#used then
+		local card=used:getCard()
+		if ensuite(card) then
+			return
+		end
+		if card.initial=="K" then
+			local free
+			for i=1,#columns do
+				if #columns[i]==0 then
+					free=columns[i]
+					break
+				end
+			end
+			if free then
+				card:move(free)
+			end
+		else
+			origin={used,index}
+			card:move(move)
+		end
+	end
+end
+local tau=2*math.pi
+local cos,sin=math.cos,math.sin
+local modf=math.modf
+local tick=love.timer.getMicroTime
+local mX,mY=love.mouse.getX,love.mouse.getY
+local vs={love.graphics.getWidth(),love.graphics.getHeight()}
+
+local game={
+	mouseUp=function(playerId)
+		local mcard=move:getCard(1)
+		if mcard and not dealing then
+			local stack=player.hit and cards.stacks[player.hit.stackId]
+			local card=stack and stack:getCard()
+			if stack and stack.owner==playerId and card and card.value==mcard.value+1 and card.suitColour~=mcard.suitColour then
+				local index=#stack
+				for i=1,#move do
+					move:getCard(1):move(stack,index+i)
+				end
+				if origin then
+					if #origin[1]>0 then
+						origin[1]:getCard().up=true
+					end
+					origin=nil
+				end
+			elseif origin then
+				for i=1,#move do
+					move:getCard(1):move(origin[1],origin[2]+i-1)
+				end
+				origin=nil
+			end
+		end
+	end
+}
+--[[
+local cardState
+local lastCard
+--]]
+---[=[
+local rand=math.random
+local target={0,0.6,1.8}
+local p={0,0,0.1}
+local v={0,0,0}
+
+local dependence=0.06
+local tightness=0.6
+local jitter=0.1
+local damping=0.5
+
+local games=0
+local wins=0
+
+local acc=0
+local nmm=0
+local autoFPS=8
+local autoEnabled=false
+local autoOnce=false
+
+local function auto()
+	local moves={{},{},{},{},{}}
+	for i=1,#columns do
+		local first=true
+		local s=columns[i]
+		for c=1,#s do
+			local card=s:getCard(c)
+			if card then
+				local suit=ceil(card.cardId/13)
+				if c==#s and (card.value-#suits[suit]-1)%13==0 then
+					moves[4][#moves[4]+1]={{card},suits[suit],s}
+				elseif card.up then
+					for i2=1,#columns do
+						if i~=i2 then
+							local col=columns[i2]
+							local tCard=col:getCard()
+							if tCard and (tCard.value-card.value==1 and card.suitColour~=tCard.suitColour or false and #cards.decks>1 and tCard.initial=="A" and card.initial=="K" and card.suit==tCard.suit) or #col==0 then --and card.initial=="K"
+								local asdf={}
+								for index=c,#s do
+									asdf[#asdf+1]=s:getCard(index)
+								end
+								if first and c>1 then
+									moves[1][#moves[1]+1]={asdf,col,s}
+								elseif first and #col>0 then
+									moves[2][#moves[2]+1]={asdf,col,s}
+								else
+									moves[5][#moves[5]+1]={asdf,col,s}
+								end
+							end
+						end
+					end
+					first=false
+				end
+			end
+		end
+	end
+	local card=used:getCard()
+	if card then
+		local suit=ceil(card.cardId/13)
+		if (card.value-#suits[suit]-1)%13==0 then
+			moves[4][#moves[4]+1]={{card},suits[suit]}
+		else
+			for i=1,#columns do
+				local col=columns[i]
+				local tCard=col:getCard()
+				if tCard and (tCard.value-card.value==1 and card.suitColour~=tCard.suitColour or false and #cards.decks>1 and tCard.initial=="A" and card.initial=="K" and card.suit==tCard.suit) or #col==0 then-- and card.initial=="K"
+					moves[3][#moves[3]+1]={{card},col}
+				end
+			end
+		end
+	end
+	local best,choosing=math.huge,{}
+	for m=1,4 do
+		if #moves[m]>0 then
+			for i=1,#moves[m] do
+				local ss=moves[m][i][3]
+				if not ss or #ss==best then
+					choosing[#choosing+1]=moves[m][i]
+				elseif #ss<best then
+					best,choosing=#ss,{moves[m][i]}
+				end
+			end
+			break
+		end
+	end
+	local chosen
+	if #choosing>0 then
+		local choosing2={}
+		local best=math.huge
+		for i=1,#choosing do
+			if choosing[i][1][1].value==best then
+				choosing2[#choosing2+1]=choosing[i]
+			elseif choosing[i][1][1].value<best then
+				best,choosing2=choosing[i][1][1].value,{choosing[i]}
+			end
+		end
+		chosen=#choosing2>0 and choosing2[rand(#choosing2)]
+	end
+	if chosen or #moves[5]>0 then
+		local choice=chosen or moves[5][rand(#moves[5])]
+		for c=1,#choice[1] do
+			choice[1][c]:move(choice[2])
+		end
+		if choice[3] and #choice[3]>0 then
+			choice[3]:getCard().up=true
+		end
+	end
+	if #deck>0 and (not chosen or #used==0) then
+		deck.mouseDown()
+	end
+	if chosen then
+		nmm=0
+	elseif nmm>=100 then
+		local allzero=#deck==0 and #used==0
+		if allzero then
+			for i=1,nColumns do
+				if #columns[i]>0 then
+					allzero=false
+					break
+				end
+			end
+		end
+		if not allzero then
+			game.keyDown(1,"return")
+		end
+		nmm=0
+		return false
+	else
+		nmm=nmm+1
+	end
+	return true
+end
+
+local dealFPS=10
+local i,j,k=1,nColumns,0
+
+local lt=tick()
+function game.update(card,stack)
+	local t=tick()
+	local dt=t-lt
+	if dealing then
+		local n
+		n,k=modf(dt*dealFPS+k)
+		for speed=1,n do
+			if i>=j then
+				deck:getCard():move(columns[i],true)
+				i,j=1,j-1
+			else
+				deck:getCard():move(columns[i],false)
+				i=i+1
+			end
+			if j<=0 then
+				i,j,k=1,nColumns,0
+				dealing=false
+				--autoEnabled=false
+				move.fixed=false
+				player.selection=move
+				games=games+1
+				break
+			end
+		end
+	else
+		local win=true
+		for i=1,#suits do
+			if #suits[i]<13*#cards.decks then
+				win=false
+				break
+			end
+		end
+		if win then
+			wins=wins+1
+			for i=1,#suits do
+				for c=1,#suits[i] do
+					suits[i]:getCard():move(deck,false)
+				end
+			end
+			deck:shuffle()
+			dealing=true
+			--autoEnabled=false
+		else
+			if autoOnce then
+				auto()
+				autoOnce=false
+			elseif autoEnabled then
+				local n
+				n,acc=modf(dt*autoFPS+acc)
+				for speed=1,n do
+					if not auto() then
+						break
+					end
+				end
+			end
+		end
+	end
+	local offset=vec.mulNum(vec.subNum(vec.div({mX(),mY()},vs),0.5),dependence)
+	v=vec.mulNum(vec.add(v,vec.mulNum({jitter*(rand()-0.5)+tightness*(target[1]+offset[1]-p[1]),jitter*(rand()-0.5)+tightness*(target[2]+offset[2]-p[2]),jitter*(rand()-0.5)+tightness*(target[3]-p[3])},dt)),damping^dt)
+	p=vec.add(p,vec.mulNum(v,dt))
+	scene.setLookDown(p[2],p[1])
+	scene.FOV=p[3]
+	lt=t
+end
+--]=]
+
+function game.keyDown(playerId,k)
+	if k=="return" then
+		if not dealing then
+			for c=1,#used do
+				used:getCard():move(deck,false)
+			end
+			for i=1,#columns do
+				for c=1,#columns[i] do
+					columns[i]:getCard():move(deck,false)
+				end
+			end
+			for i=1,#suits do
+				for c=1,#suits[i] do
+					suits[i]:getCard():move(deck,false)
+				end
+			end
+			deck:shuffle()
+			dealing=true
+		end
+	elseif k=="kpenter" then
+		autoEnabled=not autoEnabled
+	elseif k==" " then
+		autoOnce=true
+	end
+end
+
+local FPS=love.timer.getFPS
+local text=love.graphics.print
+function game.draw()
+	scene.drawScene(cards,playerId)
+	text(FPS().." FPS",scene.view[1][1],scene.view[1][2])
+	text("Wins/Games: "..wins.."/"..games.."="..wins/games,scene.view[1][1],scene.view[1][2]+scene.view[2][2]-20)
+end
+
+return game

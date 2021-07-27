@@ -1,0 +1,20 @@
+<Textures=textures.png>
+The texture sheet.
+
+<TextureMap=map.png>
+Each pixel represents the location and size Texel of a texture on 'Textures'.
+The function performed on the incoming pair of 2D vectors is:
+vec4 info=Texel(TextureMap,arg1);
+return Texel(Textures,info.rg+arg2*info.ba);
+
+<Vertices=vertices.png>
+Four dimensional vertex map (why not?)
+
+<Pairs=pairs.png>
+Each row represents a set of pairs that make a mesh (most likely only one row)
+-Pairs up vertices to be considered the same vertex at different events.
+-Pairs up textures in the same sense
+
+<Prisms=prisms.png>
+-'r', 'g', and 'b' point to columns that contain vertex pairs in 'Pairs',
+-'a' points to a column that contains a texture pair.

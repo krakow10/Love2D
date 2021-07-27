@@ -1,0 +1,20 @@
+Music/Sounds Citation
+---------------------
+MenuClick.ogg, by broumbroum (http://www.freesound.org/people/broumbroum/sounds/50565/)
+MenuSelect.ogg, by broumbroum (http://www.freesound.org/people/broumbroum/sounds/50561/)
+Menu.mp3, by bebeto (http://www.freesound.org/people/bebeto/sounds/554/)
+SlowElectricLoop.mp3, by axtoncrolley (http://www.freesound.org/people/axtoncrolley/sounds/172707/)
+DreamyLoop.wav, by Setuniman (http://www.freesound.org/people/Setuniman/sounds/141185/)
+CalmLoop.wav, by Clinthammer (http://www.freesound.org/people/Clinthammer/sounds/179532/)
+BeatLoop.wav, by djgriffin (http://www.freesound.org/people/djgriffin/sounds/114275/)
+ElectricLoop.mp3, by Timbre (http://www.freesound.org/people/Timbre/sounds/99598/)
+Powerup.ogg, by Kastenfrosch (http://www.freesound.org/people/Kastenfrosch/sounds/162482/)
+slimeATK.ogg, by Jamius (http://www.freesound.org/people/Jamius/sounds/41530/)
+Woosh.ogg, by Benboncan (http://freesound.org/people/Benboncan/sounds/74917/)
+Explosion.ogg, by sarge4267 (http://freesound.org/people/sarge4267/sounds/102734/)
+Zap.ogg, by fons (http://freesound.org/people/fons/sounds/62363/)
+
+
+Images Citation
+---------------
+Star.png, by Candy Adams (http://openclipart.org/detail/93169/star-by-candyadams)

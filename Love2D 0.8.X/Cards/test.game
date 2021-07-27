@@ -1,0 +1,88 @@
+--By xXxMoNkEyMaNxXx
+local args={...}
+local cards,scene=args[1],args[2]
+local game={}
+
+scene.FOV=0.6
+---[[
+local deck=cards.newStack()
+cards.newDeck(deck)--Put 52 cards into this stack
+cards.newDeck(deck)--,cards.loadTexturePack("a.jpg","a.jpg").packId)
+cards.newDeck(deck)
+cards.newDeck(deck)
+deck:shuffle()
+local dealt=cards.newStack()
+
+for i=1,7 do
+	local p=cards.newPlayer()
+	local hand=cards.newStack()
+	hand.layout="Horizontal"
+	hand.alignment=0.5
+	hand.owner=p.playerId
+	p.hand=hand
+	for i=1,7 do
+		deck:getCard():move(hand,true)
+	end
+	for i=1,2 do
+		local s=cards.newStack()
+		s.layout="Vertical"
+		s.owner=p.playerId
+		for i=1,4 do
+			deck:getCard():move(s,math.random()<0.5)
+		end
+	end
+end
+deck:getCard():move(dealt,true)
+--]]
+--[[
+local deck=cards.newStack()
+cards.newDeck(deck)
+local player=cards.newPlayer'Cool guy'
+player.hand=deck
+deck.owner=player.playerId
+--]]
+local isKey=love.keyboard.isDown
+local getDelta=love.timer.getDelta
+local pov=1
+
+local cardState
+local lastCard
+function game.update(hcard,stack)
+	local card=deck:getCard()
+	if card then
+		card:move(dealt,true)
+	else
+		local card=dealt:getCard()
+		while card do
+			card:move(deck,false)
+			card=dealt:getCard()
+		end
+		deck:shuffle()
+	end
+	if isKey'right' then
+		pov=pov+getDelta()
+	end
+	if isKey'left' then
+		pov=pov-getDelta()
+	end
+	if hcard~=lastCard then
+		if lastCard then
+			lastCard.up=cardState
+		end
+		if hcard then
+			cardState=hcard.up
+			hcard.up=not hcard.up
+		end
+		lastCard=hcard
+	end
+end
+
+local tanh=math.tanh
+local w,h=love.graphics.getWidth(),love.graphics.getHeight()
+local mX,mY=love.mouse.getX,love.mouse.getY
+function game.draw()
+	scene.setLookDown(0.5*tanh(4*(mY()/h-0.5))+0.5,0.5*tanh(mX()/w-0.5))
+	scene.drawScene(cards,pov)
+end
+
+return game

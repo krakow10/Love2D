@@ -1,0 +1,21 @@
+GIVEN: http://www.hpmuseum.org/software/41/41quater.htm
+q = 2 - 3i + 4j - 7k
+Conjugate:
+q*= 2 + 3i - 4j + 7k
+
+Reciprocal:
+q^-1 = 0.0256 + 0.0385 i  -0.0513 j + 0.0897 k
+
+
+ONE CAN CONCLUDE THAT:
+
+General:
+q =w+xi+yj+zk;
+
+q*=w-xi-yj-zk "conjugate"
+
+||q||=(w^2+x^2+y^2+z^2)^(1/2) "norm" or "magnitude"
+
+q^-1=(w-xi-yj-zk)/(w^2+x^2+y^2+z^2) "reciprocal"
+
+TAKE THAT, HARD AS HELL WIKIPEDIA!
